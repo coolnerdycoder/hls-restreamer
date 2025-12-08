@@ -1,8 +1,8 @@
 {
   "functions": {
     "api/playlist.js": {
-      "maxDuration": 15,
-      "memory": 1024
+      "maxDuration": 30,
+      "memory": 1536
     }
   },
   "headers": [

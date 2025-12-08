@@ -1,11 +1,28 @@
 // api/playlist.js
-// Vercel / Node serverless endpoint — multi-segment HLS restreamer (Optimized)
-
+// Vercel / Node serverless endpoint — multi-segment HLS restreamer
+if (req.url === '/api/playlist/stats') {
+  return res.status(200).json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    cacheSize: segmentCache.size,
+    uptime: process.uptime(),
+    memory: process.memoryUsage()
+  });
+}
+// Load environment variables
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+  try {
+    require('dotenv').config();
+  } catch (e) {
+    // dotenv not available, use Vercel's env vars
+  }
+}
 // =============== CONFIGURATION ===============
-const ERROR_TS_URL = "https://drive.google.com/uc?export=download&id=1DhvYgMZtv9Nq0Yo6aqQP39E76Gxk-gsC";
-const BLOCKED_HOSTS = ["ddown.xtvplus.vip", "xtvplus.vip"];
-const BLOCKED_PATTERNS = ["yhbhfgtfdt6fcr/6248"];
-const SOURCE_BASE_URL = "http://main.epgmaker.com/live/Ali130225/Cpyej2JL56Xy";
+const ERROR_TS_URL = process.env.ERROR_TS_URL
+const SOURCE_BASE_URL = process.env.SOURCE_BASE_URL
+// Block lists
+const BLOCKED_HOSTS = (process.env.BLOCKED_HOSTS || "ddown.xtvplus.vip,xtvplus.vip").split(',');
+const BLOCKED_PATTERNS = (process.env.BLOCKED_PATTERNS || "yhbhfgtfdt6fcr/6248").split(',');
 
 // Tunables (with environment variable fallbacks)
 const TIMEOUT_MS = parseInt(process.env.TIMEOUT_MS) || 8000; // Increased for redirects
