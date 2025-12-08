@@ -1,0 +1,21 @@
+{
+  "name": "hls-restreamer",
+  "version": "1.0.0",
+  "description": "HLS Restreamer for Vercel",
+  "main": "api/playlist.js",
+  "scripts": {
+    "dev": "node local-dev-server.js",
+    "start": "node api/playlist.js",
+    "vercel-dev": "vercel dev"
+  },
+  "dependencies": {
+    "node-fetch": "^2.6.7"
+  },
+  "devDependencies": {
+    "dotenv": "^16.6.1",
+    "vercel": "^28.16.0"
+  },
+  "engines": {
+    "node": "18.x"
+  }
+}
