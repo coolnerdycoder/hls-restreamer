@@ -1,14 +1,6 @@
 // api/playlist.js
 // Vercel / Node serverless endpoint — multi-segment HLS restreamer
-if (req.url === '/api/playlist/stats') {
-  return res.status(200).json({
-    status: 'ok',
-    timestamp: new Date().toISOString(),
-    cacheSize: segmentCache.size,
-    uptime: process.uptime(),
-    memory: process.memoryUsage()
-  });
-}
+
 // Load environment variables
 if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
   try {
@@ -17,12 +9,14 @@ if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
     // dotenv not available, use Vercel's env vars
   }
 }
+
 // =============== CONFIGURATION ===============
 const ERROR_TS_URL = process.env.ERROR_TS_URL
 const SOURCE_BASE_URL = process.env.SOURCE_BASE_URL
+
 // Block lists
-const BLOCKED_HOSTS = (process.env.BLOCKED_HOSTS || "ddown.xtvplus.vip,xtvplus.vip").split(',');
-const BLOCKED_PATTERNS = (process.env.BLOCKED_PATTERNS || "yhbhfgtfdt6fcr/6248").split(',');
+const BLOCKED_HOSTS = process.env.BLOCKED_HOSTS
+const BLOCKED_PATTERNS = process.env.BLOCKED_PATTERNS
 
 // Tunables (with environment variable fallbacks)
 const TIMEOUT_MS = parseInt(process.env.TIMEOUT_MS) || 8000; // Increased for redirects
@@ -92,6 +86,24 @@ module.exports = async (req, res) => {
       });
     }
     
+    // Stats endpoint - MOVED INSIDE HANDLER
+    if (req.url === '/api/playlist/stats' || req.url.includes('/stats')) {
+      return res.status(200).json({
+        status: 'ok',
+        timestamp: new Date().toISOString(),
+        cacheSize: segmentCache.size,
+        uptime: process.uptime(),
+        memory: process.memoryUsage(),
+        config: {
+          sourceBaseUrl: SOURCE_BASE_URL ? '✓ Set' : '✗ Missing',
+          errorTsUrl: ERROR_TS_URL ? '✓ Set' : '✗ Missing',
+          timeoutMs: TIMEOUT_MS,
+          maxSegments: MAX_SEGMENTS,
+          debug: DEBUG
+        }
+      });
+    }
+    
     // Validate request
     if (req.method !== 'GET') {
       return serveError(res, ERROR_TS_URL, 'Method not allowed', 405);
@@ -106,6 +118,15 @@ module.exports = async (req, res) => {
     if (!validateChannelId(id)) {
       log('WARN', 'Invalid channel ID format', { id });
       return serveError(res, ERROR_TS_URL, 'Invalid channel ID format', 400);
+    }
+    
+    // CRITICAL: Validate that environment variables are set
+    if (!SOURCE_BASE_URL) {
+      log('ERROR', 'SOURCE_BASE_URL environment variable is not set');
+      return res.status(500).json({
+        error: 'Server configuration error',
+        message: 'SOURCE_BASE_URL environment variable is required'
+      });
     }
     
     // Add CORS headers for actual response
@@ -151,6 +172,11 @@ module.exports = async (req, res) => {
 
 // =============== CORE LOGIC ===============
 async function processPlaylistRequest(id) {
+  // CRITICAL: Check SOURCE_BASE_URL again
+  if (!SOURCE_BASE_URL) {
+    throw new Error('SOURCE_BASE_URL environment variable is not configured');
+  }
+  
   const entryUrl = `${SOURCE_BASE_URL}/${id}.ts`;
   
   log('DEBUG', 'Starting playlist generation', { entryUrl });
