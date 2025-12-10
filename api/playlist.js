@@ -15,8 +15,8 @@ const ERROR_TS_URL = process.env.ERROR_TS_URL
 const SOURCE_BASE_URL = process.env.SOURCE_BASE_URL
 
 // Block lists
-const BLOCKED_HOSTS = process.env.BLOCKED_HOSTS
-const BLOCKED_PATTERNS = process.env.BLOCKED_PATTERNS
+const BLOCKED_HOSTS = (process.env.BLOCKED_HOSTS || "ddown.xtvplus.vip,xtvplus.vip").split(',');
+const BLOCKED_PATTERNS = (process.env.BLOCKED_PATTERNS || "yhbhfgtfdt6fcr/6248").split(',');
 
 // Tunables (with environment variable fallbacks)
 const TIMEOUT_MS = parseInt(process.env.TIMEOUT_MS) || 8000; // Increased for redirects
